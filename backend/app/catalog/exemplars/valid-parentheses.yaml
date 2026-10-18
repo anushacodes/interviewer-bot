@@ -1,0 +1,166 @@
+slug: valid-parentheses
+version: 2
+title: Valid Brackets
+difficulty: easy
+topics: [string, stack]
+time_limit_min: 30
+statement_md: |
+  Given a string `s` containing only the characters `(`, `)`, `[`, `]`, `{` and `}`,
+  return `True` if the brackets are balanced, otherwise `False`.
+
+  A string is balanced if:
+  - every opening bracket is closed by the same type of bracket, and
+  - brackets are closed in the correct order (an inner pair closes before the outer one).
+
+  **Constraints**
+  - `0 <= len(s) <= 10_000`
+starter_code: |
+  def is_balanced(s: str) -> bool:
+      pass
+entrypoint: is_balanced
+io_kind: function
+compare: exact
+
+examples:
+  - id: ex1
+    input: {s: "()"}
+    output: true
+  - id: ex2
+    input: {s: "([)]"}
+    output: false
+tests:
+  - id: all_types
+    input: {s: "()[]{}"}
+    output: true
+  - id: wrong_type
+    input: {s: "(]"}
+    output: false
+  - id: nested
+    input: {s: "{[]}"}
+    output: true
+  - id: empty
+    input: {s: ""}
+    output: true
+  - id: lone_opener
+    input: {s: "("}
+    output: false
+  - id: lone_closer
+    input: {s: ")"}
+    output: false
+  - id: deep_nesting
+    input: {s: "((()))"}
+    output: true
+  - id: mixed_groups
+    input: {s: "([{}])({})"}
+    output: true
+  - id: unclosed_run
+    input: {s: "((("}
+    output: false
+  - id: interleaved
+    input: {s: "{[}]"}
+    output: false
+
+clarifications:
+  - id: other_chars
+    q: Can the string contain other characters?
+    a: No, only the six bracket characters.
+  - id: empty
+    q: Is the empty string valid?
+    a: Yes, it is balanced.
+  - id: length
+    q: How long can the string be?
+    a: Up to 10,000 characters.
+  - id: error_position
+    q: Do I need to return the position of the first error?
+    a: No, just a boolean.
+
+solutions:
+  - id: repeated_replacement
+    optimal: false
+    complexity: {time: O(n^2), space: O(n)}
+    sketch: Repeatedly delete adjacent matching pairs "()", "[]", "{}" until the string stops changing.
+    signals: [.replace(, while loop until unchanged]
+    code: |
+      def is_balanced(s):
+          prev = None
+          while prev != s:
+              prev = s
+              s = s.replace("()", "").replace("[]", "").replace("{}", "")
+          return s == ""
+  - id: stack
+    optimal: true
+    complexity: {time: O(n), space: O(n)}
+    sketch: Push openers. On a closer, the stack must be non-empty and its top must be the matching opener. At the end the stack must be empty.
+    signals: [list used as stack, append/pop, "stack", closer->opener mapping]
+    code: |
+      def is_balanced(s):
+          pairs = {")": "(", "]": "[", "}": "{"}
+          stack = []
+          for ch in s:
+              if ch in "([{":
+                  stack.append(ch)
+              elif not stack or stack.pop() != pairs[ch]:
+                  return False
+          return not stack
+
+mistakes:
+  - id: count_only
+    description: Only counts brackets of each type, which accepts interleavings like "([)]".
+    code: |
+      def is_balanced(s):
+          return all(s.count(o) == s.count(c) for o, c in ["()", "[]", "{}"])
+  - id: pop_empty
+    description: Pops from an empty stack on a leading closer such as ")".
+    code: |
+      def is_balanced(s):
+          pairs = {")": "(", "]": "[", "}": "{"}
+          stack = []
+          for ch in s:
+              if ch in "([{":
+                  stack.append(ch)
+              elif stack.pop() != pairs[ch]:
+                  return False
+          return not stack
+  - id: no_final_empty_check
+    description: Forgets to check that the stack is empty at the end, so it accepts "(((".
+    code: |
+      def is_balanced(s):
+          pairs = {")": "(", "]": "[", "}": "{"}
+          stack = []
+          for ch in s:
+              if ch in "([{":
+                  stack.append(ch)
+              elif not stack or stack.pop() != pairs[ch]:
+                  return False
+          return True
+  - id: wrong_pair_mapping
+    description: Maps closers to the wrong openers.
+    code: |
+      def is_balanced(s):
+          pairs = {")": "(", "]": "{", "}": "["}
+          stack = []
+          for ch in s:
+              if ch in "([{":
+                  stack.append(ch)
+              elif not stack or stack.pop() != pairs[ch]:
+                  return False
+          return not stack
+
+hint_ladder:
+  1: Ask the candidate to walk through "([)]" by hand and say what they track as they go.
+  2: What information do you need to remember about the brackets you have seen so far, and which one matters most at the moment you see a closer?
+  3: The most recent unmatched opener is the one that must close first. What structure gives you exactly that?
+  4: Use a stack. Push openers, and on a closer pop and compare. Check for an empty stack both before popping and at the end.
+followups:
+  - id: error_index
+    q: How would you extend this to also report the index of the first unmatched bracket?
+  - id: ignore_other_chars
+    q: What if the string also contains letters and other characters to ignore?
+  - id: one_type_o1
+    q: Can you do it in O(1) extra space if there is only one bracket type?
+edge_cases:
+  - {id: empty, description: empty string, tests: [empty]}
+  - {id: single_char, description: single character, tests: [lone_opener, lone_closer]}
+  - {id: leading_closer, description: leading closer, tests: [lone_closer]}
+  - {id: unclosed, description: unclosed openers at the end, tests: [lone_opener, unclosed_run]}
+  - {id: interleaved, description: interleaved types, tests: [interleaved]}

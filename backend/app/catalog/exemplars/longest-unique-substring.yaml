@@ -1,0 +1,205 @@
+slug: longest-unique-substring
+version: 2
+title: Longest Unique Run
+difficulty: medium
+topics: [string, sliding-window, hash-map]
+time_limit_min: 45
+statement_md: |
+  Given a string `s`, return the length of the longest contiguous substring that
+  contains no repeated characters.
+
+  **Constraints**
+  - `0 <= len(s) <= 50_000`
+  - `s` consists of printable ASCII characters, including spaces.
+starter_code: |
+  def longest_unique(s: str) -> int:
+      pass
+entrypoint: longest_unique
+io_kind: function
+compare: exact
+
+examples:
+  - id: ex1
+    input: {s: "abcabcbb"}
+    output: 3
+  - id: ex2
+    input: {s: "bbbbb"}
+    output: 1
+tests:
+  - id: repeat_mid
+    input: {s: "pwwkew"}
+    output: 3
+  - id: empty
+    input: {s: ""}
+    output: 0
+  - id: single_space
+    input: {s: " "}
+    output: 1
+  - id: two_distinct
+    input: {s: "au"}
+    output: 2
+  - id: shrink_not_reset
+    input: {s: "dvdf"}
+    output: 3
+  - id: stale_repeat
+    input: {s: "abba"}
+    output: 2
+  - id: stale_repeat_long
+    input: {s: "tmmzuxt"}
+    output: 5
+  - id: all_distinct
+    input: {s: "abcdefg"}
+    output: 7
+  - id: repeat_at_start
+    input: {s: "aab"}
+    output: 2
+  - id: shrink_not_reset_long
+    input: {s: "anviaj"}
+    output: 5
+
+clarifications:
+  - id: substring
+    q: Substring or subsequence?
+    a: Substring. The characters must be contiguous.
+  - id: case
+    q: Is it case sensitive?
+    a: Yes, "a" and "A" are different characters.
+  - id: empty
+    q: What should I return for an empty string?
+    a: 0.
+  - id: return_what
+    q: Do I need to return the substring itself?
+    a: No, only its length.
+  - id: size
+    q: How large can the input be?
+    a: Up to 50,000 characters.
+  - id: spaces
+    q: Does a space count as a character?
+    a: Yes, it is treated like any other character.
+
+solutions:
+  - id: brute_force
+    optimal: false
+    complexity: {time: O(n^3), space: O(min(n, k))}
+    sketch: Check every substring for uniqueness. Too slow for n = 50,000.
+    signals: [triple nesting, len(set(sub)) == len(sub)]
+    code: |
+      def longest_unique(s):
+          best = 0
+          for i in range(len(s)):
+              for j in range(i + 1, len(s) + 1):
+                  if len(set(s[i:j])) == j - i:
+                      best = max(best, j - i)
+          return best
+  - id: extend_from_each_start
+    optimal: false
+    complexity: {time: O(n^2), space: O(min(n, k))}
+    sketch: For each start index, extend until a repeat appears.
+    signals: [nested loops with break on repeat, set reset per start]
+    code: |
+      def longest_unique(s):
+          best = 0
+          for i in range(len(s)):
+              seen = set()
+              for j in range(i, len(s)):
+                  if s[j] in seen:
+                      break
+                  seen.add(s[j])
+              best = max(best, len(seen))
+          return best
+  - id: window_set
+    optimal: false
+    complexity: {time: O(n), space: O(min(n, k))}
+    sketch: Grow the right edge. While the new character is in the window set, remove the left character and advance left.
+    signals: [left/right pointers, set, inner while removing from left]
+    code: |
+      def longest_unique(s):
+          window, left, best = set(), 0, 0
+          for right, ch in enumerate(s):
+              while ch in window:
+                  window.remove(s[left])
+                  left += 1
+              window.add(ch)
+              best = max(best, right - left + 1)
+          return best
+  - id: window_last_index
+    optimal: true
+    complexity: {time: O(n), space: O(min(n, k))}
+    sketch: Map each character to its last index. On a repeat inside the window, jump left to last_index + 1. Never move left backwards.
+    signals: [dict char->index, max(left, ...), single loop]
+    code: |
+      def longest_unique(s):
+          last, left, best = {}, 0, 0
+          for right, ch in enumerate(s):
+              if ch in last and last[ch] >= left:
+                  left = last[ch] + 1
+              last[ch] = right
+              best = max(best, right - left + 1)
+          return best
+
+mistakes:
+  - id: reset_on_repeat
+    description: Resets the window to empty on a repeat instead of shrinking it.
+    code: |
+      def longest_unique(s):
+          cur, best = set(), 0
+          for ch in s:
+              if ch in cur:
+                  cur = set()
+              cur.add(ch)
+              best = max(best, len(cur))
+          return best
+  - id: left_moves_backwards
+    description: Moves the left edge backwards when the last-seen index is outside the window.
+    code: |
+      def longest_unique(s):
+          last, left, best = {}, 0, 0
+          for right, ch in enumerate(s):
+              if ch in last:
+                  left = last[ch] + 1
+              last[ch] = right
+              best = max(best, right - left + 1)
+          return best
+  - id: off_by_one_length
+    description: Computes the window length as right - left instead of right - left + 1.
+    code: |
+      def longest_unique(s):
+          last, left, best = {}, 0, 0
+          for right, ch in enumerate(s):
+              if ch in last and last[ch] >= left:
+                  left = last[ch] + 1
+              last[ch] = right
+              best = max(best, right - left)
+          return best
+  - id: no_final_update
+    description: Only updates the maximum when a repeat occurs, missing the final window.
+    code: |
+      def longest_unique(s):
+          last, left, best = {}, 0, 0
+          for right, ch in enumerate(s):
+              if ch in last and last[ch] >= left:
+                  best = max(best, right - left)
+                  left = last[ch] + 1
+              last[ch] = right
+          return best
+
+hint_ladder:
+  1: Ask the candidate to trace "dvdf" by hand and describe the window they are tracking.
+  2: When you hit a repeated character, do you really need to throw away everything you have built so far?
+  3: Think of a window with a left and right edge. How could you move only the left edge to restore uniqueness?
+  4: Keep a map from character to its last index. On a repeat, move left to max(left, last_index + 1), then update the maximum length.
+followups:
+  - id: jump_left
+    q: Can you avoid moving the left edge one step at a time?
+  - id: return_substring
+    q: How would you return the substring itself, not just its length?
+  - id: unicode
+    q: What changes if the alphabet is Unicode rather than ASCII?
+  - id: at_most_two_distinct
+    q: Return the longest substring with at most two distinct characters.
+edge_cases:
+  - {id: empty, description: empty string, tests: [empty]}
+  - {id: all_same, description: all identical characters, tests: [ex2]}
+  - {id: all_distinct, description: all distinct characters, tests: [all_distinct, two_distinct]}
+  - {id: stale_repeat, description: a repeat whose last occurrence is outside the window, tests: [stale_repeat, stale_repeat_long]}
+  - {id: repeat_at_end, description: repeat at the very end, tests: [stale_repeat_long]}

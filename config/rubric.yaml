@@ -1,0 +1,39 @@
+# Report rubric (ARCHITECTURE.md §9). Scores are 1-4; every score must cite evidence seqs.
+version: 1
+
+dimensions:
+  communication:
+    4: Thinks aloud throughout, states the approach before coding, and explains tradeoffs clearly.
+    3: Mostly clear, with occasional silent stretches.
+    2: Explains only when prompted.
+    1: Little or no explanation.
+  problem_solving:
+    4: Reaches the optimal approach independently and justifies it.
+    3: Reaches a good approach with light probing.
+    2: Needs directional hints to reach a working approach.
+    1: Does not reach a working approach.
+  coding:
+    4: Clean, correct code on the first or second run.
+    3: Correct after minor debugging.
+    2: Correct after significant debugging or help.
+    1: Not correct by the end.
+  verification:
+    4: Traces examples and edge cases unprompted, and catches their own bugs.
+    3: Tests when prompted, with reasonable edge cases.
+    2: Minimal testing.
+    1: No testing.
+  independence:
+    4: No hints (max rung 0-1).
+    3: Max rung 2.
+    2: Max rung 3.
+    1: Rung 4 or the solution was needed.
+
+metrics:   # computed in code, not by the LLM
+  - clarifying_questions
+  - stated_approach_before_code
+  - stated_time_complexity
+  - stated_space_complexity
+  - edge_cases_mentioned
+  - time_to_first_all_pass_s
+  - max_rung
+  - interviewer_unsolicited_messages

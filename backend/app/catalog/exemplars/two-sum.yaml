@@ -1,0 +1,176 @@
+slug: two-sum
+version: 2
+title: Two Sum
+difficulty: easy
+topics: [array, hash-map]
+time_limit_min: 30
+statement_md: |
+  Given a list of integers `nums` and an integer `target`, return the indices of the
+  two numbers in `nums` that add up to `target`.
+
+  Each input has exactly one valid pair. You may not use the same element twice.
+  You may return the two indices in any order.
+
+  **Constraints**
+  - `2 <= len(nums) <= 10_000`
+  - `-10^9 <= nums[i] <= 10^9`
+  - `-10^9 <= target <= 10^9`
+starter_code: |
+  def two_sum(nums: list[int], target: int) -> list[int]:
+      pass
+entrypoint: two_sum
+io_kind: function
+compare: unordered
+
+examples:
+  - id: ex1
+    input: {nums: [2, 7, 11, 15], target: 9}
+    output: [0, 1]
+  - id: ex2
+    input: {nums: [3, 2, 4], target: 6}
+    output: [1, 2]
+tests:
+  - id: dup_pair
+    input: {nums: [3, 3], target: 6}
+    output: [0, 1]
+  - id: negatives
+    input: {nums: [-1, -2, -3, -4, -5], target: -8}
+    output: [2, 4]
+  - id: zeros
+    input: {nums: [0, 4, 3, 0], target: 0}
+    output: [0, 3]
+  - id: pair_at_end
+    input: {nums: [1, 5, 9, 14, 20], target: 34}
+    output: [3, 4]
+  - id: big_values
+    input: {nums: [5, 75, 25], target: 100}
+    output: [1, 2]
+  - id: neg_and_pos
+    input: {nums: [-3, 4, 3, 90], target: 0}
+    output: [0, 2]
+  - id: half_of_target_alone
+    input: {nums: [4, 1, 7], target: 8}
+    output: [1, 2]
+
+clarifications:
+  - id: duplicates
+    q: Can the array contain duplicates?
+    a: Yes.
+  - id: one_answer
+    q: Is there always exactly one valid answer?
+    a: Yes, you can assume exactly one pair exists.
+  - id: reuse
+    q: Can I use the same element twice?
+    a: No. The two indices must be different.
+  - id: negatives
+    q: Can the numbers be negative?
+    a: Yes, both the numbers and the target can be negative or zero.
+  - id: sorted
+    q: Is the array sorted?
+    a: No.
+  - id: mutate
+    q: Can I modify the input?
+    a: You can, but returning indices means sorting in place would lose the original positions.
+  - id: no_answer
+    q: What should I return if there is no answer?
+    a: That case won't occur given the guarantee.
+
+solutions:
+  - id: brute_force
+    optimal: false
+    complexity: {time: O(n^2), space: O(1)}
+    sketch: Check every pair of indices.
+    signals: [nested loops over nums, "every pair", "two loops"]
+    code: |
+      def two_sum(nums, target):
+          for i in range(len(nums)):
+              for j in range(i + 1, len(nums)):
+                  if nums[i] + nums[j] == target:
+                      return [i, j]
+  - id: sort_two_pointers
+    optimal: false
+    complexity: {time: O(n log n), space: O(n)}
+    sketch: Sort (value, index) pairs, then move two pointers inward. Needs index bookkeeping.
+    signals: [sorted(, "two pointers", left/right indices]
+    code: |
+      def two_sum(nums, target):
+          order = sorted(range(len(nums)), key=lambda i: nums[i])
+          lo, hi = 0, len(order) - 1
+          while lo < hi:
+              s = nums[order[lo]] + nums[order[hi]]
+              if s == target:
+                  return [order[lo], order[hi]]
+              if s < target:
+                  lo += 1
+              else:
+                  hi -= 1
+  - id: hash_map
+    optimal: true
+    complexity: {time: O(n), space: O(n)}
+    sketch: One pass. For each number, check if target - number is already in the map, then store number -> index.
+    signals: [dict/set, "complement", "seen", single loop]
+    code: |
+      def two_sum(nums, target):
+          seen = {}
+          for i, x in enumerate(nums):
+              if target - x in seen:
+                  return [seen[target - x], i]
+              seen[x] = i
+
+mistakes:
+  - id: same_element_twice
+    description: Uses the same element twice (e.g. target 8 with a lone 4).
+    code: |
+      def two_sum(nums, target):
+          seen = {x: i for i, x in enumerate(nums)}
+          for i, x in enumerate(nums):
+              if target - x in seen:
+                  return [i, seen[target - x]]
+  - id: returns_values
+    description: Returns the values instead of the indices.
+    code: |
+      def two_sum(nums, target):
+          for i in range(len(nums)):
+              for j in range(i + 1, len(nums)):
+                  if nums[i] + nums[j] == target:
+                      return [nums[i], nums[j]]
+  - id: sort_loses_indices
+    description: Sorts the array and returns positions in the sorted copy.
+    code: |
+      def two_sum(nums, target):
+          s = sorted(nums)
+          lo, hi = 0, len(s) - 1
+          while lo < hi:
+              if s[lo] + s[hi] == target:
+                  return [lo, hi]
+              if s[lo] + s[hi] < target:
+                  lo += 1
+              else:
+                  hi -= 1
+  - id: insert_before_check
+    description: Inserts the current number into the map before checking, so it matches itself.
+    code: |
+      def two_sum(nums, target):
+          seen = {}
+          for i, x in enumerate(nums):
+              seen[x] = i
+              if target - x in seen:
+                  return [seen[target - x], i]
+
+hint_ladder:
+  1: Ask what the candidate would do for a tiny input, or what they pay per element to find its partner.
+  2: For a fixed number, what exactly are you looking for, and how fast can you check whether it exists?
+  3: Is there a data structure that answers "have I seen this value, and where?" in constant time?
+  4: As you scan, store each value's index in a hash map, and check for the complement before inserting.
+followups:
+  - id: sorted_input
+    q: What if the array is sorted? Can you use O(1) extra space?
+  - id: all_pairs
+    q: What if there can be multiple valid pairs and you must return all of them?
+  - id: out_of_memory
+    q: What if the data does not fit in memory?
+edge_cases:
+  - {id: two_elements, description: only two elements, tests: [dup_pair]}
+  - {id: duplicate_pair, description: duplicate values forming the pair, tests: [dup_pair, zeros]}
+  - {id: negatives_zero, description: zeros and negative numbers, tests: [negatives, zeros, neg_and_pos]}
+  - {id: self_match, description: a value equal to half the target that must not pair with itself, tests: [half_of_target_alone]}

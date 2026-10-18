@@ -1,0 +1,12 @@
+# Model per purpose. Change here only; code reads by purpose name.
+version: 1
+
+purposes:
+  decide:        {model: claude-haiku-5-5,  max_tokens: 800}
+  escalate:      {model: claude-sonnet-5-5, max_tokens: 800}
+  speaker:       {model: claude-sonnet-5-5, max_tokens: 200, stream: true}
+  reflect:       {model: claude-sonnet-5-5, max_tokens: 4000}
+  enrich:        {model: claude-sonnet-5-5, max_tokens: 8000, batch: true}
+  sim_candidate: {model: claude-haiku-5-5,  max_tokens: 400}
+
+prompt_caching: true    # static SYSTEM prefix per session (rules + persona + problem)

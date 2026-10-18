@@ -1,0 +1,48 @@
+# Gate, guardrails, escalation, budget, phase budgets (ARCHITECTURE.md §7).
+# Every value here is stamped into the session manifest via this file's hash.
+version: 1
+
+gate:
+  skip_if_fingerprint_unchanged: true
+  skip_soft_triggers_while_candidate_active: true
+  min_seconds_between_decides: 8        # direct candidate messages bypass
+
+guardrails:
+  unsolicited_cooldown_s: 20
+  rung:
+    max_step: 1
+    rung4_min_pct_elapsed: 80
+  phase_rules:
+    followup_requires_all_shadow_pass: true
+    wrap_up_min_pct_elapsed: 90         # unless the candidate ends the session or the follow-ups are done
+
+escalation:
+  enabled: true
+  acts: [hint, redirect]
+  min_rung_for_hint: 3
+  below_confidence: 0.7
+
+budget:                                 # per session, USD
+  soft_cap: 0.40                        # past this: only answer, time_check, and wrap_up
+  hard_cap: 0.60                        # past this: decide calls stop except for hard triggers
+
+shadow:
+  debounce_s: 3
+  min_interval_s: 5
+
+lint:
+  max_sentences: 3
+  max_questions: 1
+  near_duplicate_similarity: 0.85
+  regenerate_attempts: 1
+
+phase_budget_pct:                       # share of the time limit; soft, used for "over budget" signals
+  intro: 3
+  clarify: 10
+  approach: 15
+  code: 40
+  test: 15
+  complexity: 7
+  followup: 10
+
+time_marks_pct: [50, 80, 100]
